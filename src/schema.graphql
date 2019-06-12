@@ -1,0 +1,46 @@
+# import * from './generated/prisma.graphql'
+type SuccessMessage {
+  # custom type, allows us to return a specific shape of an object.
+  message: String
+}
+
+
+type Mutation {
+  createItem(title: String description: String price: Int image: String largeImage: String): Item!
+  updateItem(id: ID!, title: String, description: String, price: Int): Item!
+  # update item mutation, doesn't require any field other than the ID, also does not currently handle image update/replacement. -- can be added later.
+  deleteItem(id: ID!): Item
+  # for deleteItem we could just return an string as a success message, but we've kept returning back the item to confirm which item got deleted.
+  signup(email: String!, password: String!, name: String!): User!
+  signin(email: String!, password: String!): User!
+  signout: SuccessMessage
+  requestReset(email: String!): SuccessMessage
+  resetPassword(resetToken: String!, password: String!, confirmPassword: String!): User!
+  # requires a resetToken which is a string, as well as a new password, and a confirmation, then returns a User.
+}
+
+
+
+
+type Query {
+  items(where: ItemWhereInput, orderBy: ItemOrderByInput, skip: Int, first: Int): [Item]!
+  item(where: ItemWhereUniqueInput!): Item
+  itemsConnection(where: ItemWhereInput): ItemConnection!
+  me: User
+  # user is not a required item, because they may not be logged in.
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  password: String!
+  resetToken: String
+  resetTokenExpiry: Float
+  permissions: [Permission!]!
+}
+
+# public facing api. that allows our app and users to interface with the api.
+# defined args and types for createItem mutation,
+# NOTE: args can also be passed in as an object called 'data'
+
