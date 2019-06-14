@@ -37,6 +37,23 @@ server.express.use((req, res, next) => {
   // passes the request down the line allowing each page render to access the response.
 });
 
+
+// Middleware to populate the user on each request when logged in:
+server.express.use(async (req, res, next) => {
+  // exit if user is not logged in.
+  if (!req.userId) return next();
+  // find the user where the id matches.
+  const user = await db.query.user({
+    where: { id: req.userId }
+    // return the following info about the user:
+  }, '{id, permissions, email name}');
+  // console.log(user);
+
+  // put the user onto the request to pass it along:
+  req.user = user;
+  next();
+})
+
 server.start(
   {
     cors: {

@@ -7,6 +7,8 @@ const { promisify } = require('util');
 //used to turn callbacks fns into promises-  available by default via Node.
 const { transport, makeANiceEmail } = require('../mail');
 // used to capture emails sent from the server
+const { hasPermission } = require('../utils');
+
 
 const Mutations = {
 
@@ -15,9 +17,14 @@ const Mutations = {
 
     const item = await ctx.db.mutation.createItem({
       data: {
-        ...args
-        // spread all args on item
-      }
+        // This is how to create a relationship between the Item and the User
+        user: {
+          connect: {
+            id: ctx.request.userId,
+          },
+        },
+        ...args,
+      },
     }, info)
     // passing info along as the 2nd argument, allows our query to be handled from our frontend
     // and be passed back to the backend.
@@ -48,10 +55,18 @@ const Mutations = {
     const where = { id: args.id };
 
     //1. find the item
-    const item = await ctx.db.query.item({ where }, `{id title}`)
+    const item = await ctx.db.query.item({ where }, `{ id title user { id }}`);
     // passing in the where variable and  raw graphql template that defines what we want returned to maKe sure we get atleast the id / title back o fthe removed item. -- sometimes there can be issues, so we are making sure to be explicit.
 
     //2. TODO: check privileges (make sure person is allowed to delete this item)
+    const ownsItem = item.user.id === ctx.request.userId;
+    const hasPermissions = ctx.request.user.permissions.some(permission =>
+      ['ADMIN', 'ITEMDELETE'].includes(permission)
+    ); // some() checks to see if at least one of the items in the array
+
+    if (!ownsItem && !hasPermissions) {
+      throw new Error("You don't have permission to do that!");
+    }
 
     //3. delete item.
     return ctx.db.mutation.deleteItem({ where }, info);
@@ -208,6 +223,73 @@ const Mutations = {
     });
     // 8. return the new user
     return updatedUser;
+  },
+
+  async updatePermissions(parent, args, ctx, info) {
+    // 1. Is user logged in?
+    if (!ctx.request.userId) {
+      throw new Error('You Must Be Logged In');
+    }
+    // 2. Query current user
+    const currentUser = await ctx.db.query.user({
+      where: {
+        id: ctx.request.userId
+      },
+    }, info)
+    // 3. Check user's permissions
+    hasPermission(currentUser, ['ADMIN', 'PERMISSIONUPDATE']);
+    // 4. Update Permissions
+    console.log(`updateuser: ${args.userId}`)
+    return ctx.db.mutation.updateUser({
+      // using the prisma generated updateUser mutation here:
+      data: {
+        // data to be updated:
+        permissions: {
+          set: args.permissions
+        }, // setting permissions - because enum must use "set:" syntax
+      },
+      where: {
+        id: args.userId
+      }, // which item to udpate with data.
+    }, info);
+
+  },
+
+  async addToCart(parent, args, ctx, info) {
+    // 1. Check if user is signed in.
+    const { userId } = ctx.request;
+    if (!userId) {
+      throw new Error('You must be signed in');
+    }
+    // 2. Query the users current cart
+    // we're running a query for multiple items because, we need to query user & item ids
+    const [existingCartItem] = await ctx.db.query.cartItems({
+      where: {
+        user: { id: userId },   // provides the usersId to the query
+        item: { id: args.id },  // provides the item's Id to the query.
+        // both ids must match, meaning the user has this item in their cart already.
+      },
+    })
+    // 3a. if item already exists in cart increment by 1
+    if (existingCartItem) {
+      console.log('This item is already in the cart');
+      return ctx.db.mutation.updateCartItem({
+        where: { id: existingCartItem.id }, // match items by existing cart item id
+        data: { quantity: existingCartItem.quantity + 1 } // when found increment by 1
+      }, info)
+    }
+    // 3b. if this item does not exist, create a new one with the value of 1
+    return ctx.db.mutation.createCartItem({
+      data: {
+        user: {
+          connect: { id: userId }, // establishes the relationship
+        },
+        item: {
+          connect: { id: args.id }, // establishes the relationship
+        },
+      },
+    }, info);
+
   },
 };
 

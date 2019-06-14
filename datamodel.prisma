@@ -15,11 +15,12 @@ type User {
   email: String! @unique
   password: String!
   resetToken: String
-  resetTokenExpiry: Float
+  resetTokenExpiry: String
   permissions: [Permission] @scalarList(strategy: RELATION)
   # permissions accepts an array of type: permission, called an 'enum' defined above.
   # recieved an error that prompts to use @scalarList when accepting an array or list
   # 'https://github.com/prisma/prisma/issues/4426#issuecomment-487389870'
+  cart: [CartItem!]!
 }
 
 type Item {
@@ -29,8 +30,14 @@ type Item {
   image: String
   largeImage: String
   price: Int!
+  user: User!
   # createdAt: DateTime! @createdAt
   # updatedAt: DateTime! @updatedAt
-  # user: User!
 }
 
+type CartItem {
+  id: ID! @id @unique
+  quantity: Int! @default(value: 1)
+  item: Item! #relationship to item
+  user: User! #relationship to user
+}

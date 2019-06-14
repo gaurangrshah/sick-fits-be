@@ -17,9 +17,10 @@ type Mutation {
   requestReset(email: String!): SuccessMessage
   resetPassword(resetToken: String!, password: String!, confirmPassword: String!): User!
   # requires a resetToken which is a string, as well as a new password, and a confirmation, then returns a User.
+  updatePermissions(permissions: [Permission], userId: ID!) : User
+  # permissions takes in an array of permission items, also a required userId.
+  addToCart(id: ID!): CartItem
 }
-
-
 
 
 type Query {
@@ -28,6 +29,7 @@ type Query {
   itemsConnection(where: ItemWhereInput): ItemConnection!
   me: User
   # user is not a required item, because they may not be logged in.
+  users: [User]!
 }
 
 type User {
@@ -36,8 +38,9 @@ type User {
   email: String!
   password: String!
   resetToken: String
-  resetTokenExpiry: Float
+  resetTokenExpiry: String
   permissions: [Permission!]!
+  cart: [CartItem!]!
 }
 
 # public facing api. that allows our app and users to interface with the api.
