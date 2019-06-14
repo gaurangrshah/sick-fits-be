@@ -20,6 +20,7 @@ type Mutation {
   updatePermissions(permissions: [Permission], userId: ID!) : User
   # permissions takes in an array of permission items, also a required userId.
   addToCart(id: ID!): CartItem
+  removeFromCart(id: ID!): CartItem
 }
 
 
