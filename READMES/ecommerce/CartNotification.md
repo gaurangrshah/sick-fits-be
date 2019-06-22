@@ -160,3 +160,38 @@ count-exit-active {
 }
 ```
 
+
+
+There is some cleanup we need to do, currenly we get an error when an item gets removed from our inventory (so its no longer avaialble for purchase, and shouldn't be in anyone's cart.) because the item is required to be returned back to us, so in our `datamodel.primsa`: ==BackEnd==
+
+```react
+  item: Item #relationship to item
+```
+
+> we've remove the require(`!`) from item, allowing the cartitem to not have an item if it's been removed. 
+
+becase we've  updated the datmodel we need to redeploy to prisma:
+
+```shell
+yarn deploy
+```
+
+> this will have also updated our generated schema from prisma, to reflect this change.
+
+
+
+==FrontEnd== `components/CartItem.js`
+
+---------------------------------
+
+```react
+  // Check if item exists:
+  if (!cartItem.item) return (
+    <CartItemStyles>
+      <p>This Item has been removed</p>
+      {/* allows user to remove notification and remenants of item */}
+      <RemoveFromCart id={cartItem.id} />
+    </CartItemStyles>
+  )
+```
+
