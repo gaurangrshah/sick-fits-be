@@ -33,5 +33,38 @@ const Query = {
     // note the first arg, `where` gets provided an empty object.
     // once again the 2nd arg, `info` contains the fields from the query that we are requesting.
   },
+  async order(parent, args, ctx, info) {
+    //1. Make sure user is logged in
+    if (!ctx.request.userId) throw new Error('Please log in');
+
+    //2. Query the current order.
+    const order = await ctx.db.query.order({
+      where: { id: args.id },
+    }, info)
+    //3. Check if they have the permissiones to see this order.
+    // does user own this order?
+    const ownsOrder = order.user.id === ctx.request.userId;
+    // does user have permission to view this order?
+    const hasPermissionsToSeeOrder = ctx.request.user.permissions.includes('ADMIN');
+
+    if (!ownsOrder || !hasPermissionsToSeeOrder) {
+      throw new Error(`Sorry, You cant view this, because this is your order ${ownsOrder}||and your permission ${hasPermissionsToSeeOrder})`)
+    }
+
+    //4. Return the order.
+    return order
+  },
+  async orders(parent, args, ctx, info) {
+    const { userId } = ctx.request;
+    if (!userId) {
+      throw new Error('you must be signed in!');
+    }
+    return ctx.db.query.orders(
+      {
+        where: {
+          user: { id: userId },
+        },
+      }, info);
+  },
 };
 module.exports = Query;

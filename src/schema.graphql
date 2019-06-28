@@ -21,6 +21,7 @@ type Mutation {
   # permissions takes in an array of permission items, also a required userId.
   addToCart(id: ID!): CartItem
   removeFromCart(id: ID!): CartItem
+  createOrder(token: String!) : Order!
 }
 
 
@@ -31,6 +32,8 @@ type Query {
   me: User
   # user is not a required item, because they may not be logged in.
   users: [User]!
+  order(id: ID!): Order!
+  orders(orderBy: OrderOrderByInput): [Order]!
 }
 
 type User {
@@ -44,7 +47,9 @@ type User {
   cart: [CartItem!]!
 }
 
+
 # public facing api. that allows our app and users to interface with the api.
-# defined args and types for createItem mutation,
 # NOTE: args can also be passed in as an object called 'data'
+
+
 

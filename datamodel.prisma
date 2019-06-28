@@ -41,3 +41,26 @@ type CartItem {
   item: Item #relationship to item
   user: User! #relationship to user
 }
+
+type OrderItem {
+  id: ID!  @id @unique
+  title: String!
+  description: String!
+  image: String!
+  largeImage: String!
+  price: Int!
+  quantity: Int! @default(value: 1)
+	#sets minimum quantity to: 1
+	user: User
+	#sets user that purchased item  -- not used in queries, but useful for reporting purposes.
+}
+
+type Order {
+  id: ID! @id  @unique
+  items: [OrderItem!]!
+  total: Int!
+  user: User!
+  charge: String!
+  createdAt: DateTime! @createdAt
+	updatedAt: DateTime! @updatedAt
+}
