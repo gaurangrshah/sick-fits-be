@@ -43,6 +43,7 @@ type User {
   password: String!
   resetToken: String
   resetTokenExpiry: String
+  orders: [Order!]!
   permissions: [Permission!]!
   cart: [CartItem!]!
 }

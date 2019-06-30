@@ -16,6 +16,7 @@ type User {
   password: String!
   resetToken: String
   resetTokenExpiry: String
+  orders: [Order!]!
   permissions: [Permission] @scalarList(strategy: RELATION)
   # permissions accepts an array of type: permission, called an 'enum' defined above.
   # recieved an error that prompts to use @scalarList when accepting an array or list
